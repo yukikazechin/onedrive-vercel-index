@@ -5,6 +5,7 @@ import { Menu, Transition } from '@headlessui/react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { useCookies, withCookies } from 'react-cookie'
+import { useTranslation } from 'next-i18next'
 
 // https://headlessui.dev/react/menu#integrating-with-next-js
 const CustomLink = ({ href, children, as, locale, ...props }): JSX.Element => {
@@ -32,13 +33,16 @@ const localeText = (locale: string): string => {
     case 'tr-TR':
       return '🇹🇷 Türkçe'
     case 'zh-TW':
-      return '🇹🇼 繁體中文'
+      return '🇨🇳 繁體中文'
+    case 'ja':
+      return '🇯🇵 日本語'
     default:
       return '🇬🇧 English'
   }
 }
 
 const SwitchLang = () => {
+  const { t } = useTranslation()
   const { locales, pathname, query, asPath } = useRouter()
 
   const [_, setCookie] = useCookies(['NEXT_LOCALE'])
@@ -46,7 +50,7 @@ const SwitchLang = () => {
   return (
     <div className="relative">
       <Menu>
-        <Menu.Button className="flex items-center space-x-1.5 hover:opacity-80 dark:text-white">
+        <Menu.Button className="flex items-center space-x-1.5 hover:opacity-80 dark:text-white" aria-label={t('Language')}>
           <FontAwesomeIcon className="h-4 w-4" icon="language" />
           <FontAwesomeIcon className="h-3 w-3" icon="chevron-down" />
         </Menu.Button>

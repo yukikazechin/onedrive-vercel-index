@@ -19,7 +19,7 @@ import siteConfig from '../../config/site.config'
 
 /**
  * Extract the searched item's path in field 'parentReference' and convert it to the
- * absolute path represented in onedrive-vercel-index
+ * absolute path represented in onedrive-docker-index
  *
  * @param path Path returned from the parentReference field of the driveItem
  * @returns The absolute path of the driveItem in the search result
@@ -32,9 +32,9 @@ function mapAbsolutePath(path: string): string {
   // replace URL sensitive characters such as the # with %23
   return absolutePath.length > 1 // solve https://github.com/spencerwooo/onedrive-vercel-index/issues/539
     ? absolutePath[1]
-        .split('/')
-        .map(p => encodeURIComponent(decodeURIComponent(p)))
-        .join('/')
+      .split('/')
+      .map(p => encodeURIComponent(decodeURIComponent(p)))
+      .join('/')
     : ''
 }
 
@@ -54,9 +54,9 @@ function useDriveItemSearch() {
       item['path'] =
         'path' in item.parentReference
           ? // OneDrive International have the path returned in the parentReference field
-            `${mapAbsolutePath(item.parentReference.path)}/${encodeURIComponent(item.name)}`
+          `${mapAbsolutePath(item.parentReference.path)}/${encodeURIComponent(item.name)}`
           : // OneDrive for Business/Education does not, so we need extra steps here
-            ''
+          ''
     })
 
     return data
@@ -84,7 +84,7 @@ function SearchResultItemTemplate({
   itemDescription,
   disabled,
 }: {
-  driveItem: OdSearchResult[number]
+  driveItem: any
   driveItemPath: string
   itemDescription: string
   disabled: boolean
@@ -93,58 +93,40 @@ function SearchResultItemTemplate({
     <Link
       href={driveItemPath}
       passHref
-      className={`flex items-center space-x-4 border-b border-gray-400/30 px-4 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-850 ${
-        disabled ? 'pointer-events-none cursor-not-allowed' : 'cursor-pointer'
-      }`}
+      className={`flex items-center space-x-4 border-b border-gray-400/30 px-4 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-850 ${disabled ? 'pointer-events-none cursor-not-allowed' : 'cursor-pointer'
+        }`}
     >
-      <FontAwesomeIcon icon={driveItem.file ? getFileIcon(driveItem.name) : ['far', 'folder']} />
-      <div>
-        <div className="text-sm font-medium leading-8">{driveItem.name}</div>
-        <div
-          className={`overflow-hidden truncate font-mono text-xs opacity-60 ${
-            itemDescription === 'Loading ...' && 'animate-pulse'
-          }`}
-        >
-          {itemDescription}
+      {driveItem && <>
+        <FontAwesomeIcon icon={driveItem?.file ? getFileIcon(driveItem?.name) : ['far', 'folder']} />
+        <div>
+          <div className="text-sm font-medium leading-8">{driveItem?.name}</div>
+          <div
+            className={`overflow-hidden truncate font-mono text-xs opacity-60 ${itemDescription === 'Loading ...' && 'animate-pulse'
+              }`}
+          >
+            {itemDescription}
+          </div>
         </div>
-      </div>
+      </>
+      }
     </Link>
   )
 }
 
 function SearchResultItemLoadRemote({ result }: { result: OdSearchResult[number] }) {
   const { data, error }: SWRResponse<OdDriveItem, { status: number; message: any }> = useSWR(
-    [`/api/item/?id=${result.id}`],
+    [`/api/item/?id=${encodeURIComponent(result.id)}`],
     fetcher
   )
 
-  const { t } = useTranslation()
-
-  if (error) {
-    return (
-      <SearchResultItemTemplate
-        driveItem={result}
-        driveItemPath={''}
-        itemDescription={typeof error.message?.error === 'string' ? error.message.error : JSON.stringify(error.message)}
-        disabled={true}
-      />
-    )
-  }
-  if (!data) {
-    return (
-      <SearchResultItemTemplate
-        driveItem={result}
-        driveItemPath={''}
-        itemDescription={t('Loading ...')}
-        disabled={true}
-      />
-    )
+  if (error || !data) {
+    return
   }
 
   const driveItemPath = `${mapAbsolutePath(data.parentReference.path)}/${encodeURIComponent(data.name)}`
   return (
     <SearchResultItemTemplate
-      driveItem={result}
+      driveItem={data}
       driveItemPath={driveItemPath}
       itemDescription={decodeURIComponent(driveItemPath)}
       disabled={false}
@@ -211,10 +193,10 @@ export default function SearchModal({
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-0 scale-95"
           >
-            <div className="my-12 inline-block w-full max-w-3xl transform overflow-hidden rounded border border-gray-400/30 text-left shadow-xl transition-all">
+            <div className="my-12 inline-block w-full max-w-3xl transform overflow-hidden rounded border border-gray-400/30 text-left shadow-xl transition-all backdrop-blur-md !bg-opacity-50">
               <Dialog.Title
                 as="h3"
-                className="flex items-center space-x-4 border-b border-gray-400/30 bg-gray-50 p-4 dark:bg-gray-800 dark:text-white"
+                className="flex items-center space-x-4 border-b border-gray-400/30 bg-gray-50 p-4 dark:bg-gray-800 dark:text-white backdrop-blur-md !dark:bg-opacity-0"
               >
                 <FontAwesomeIcon icon="search" className="h-4 w-4" />
                 <input
@@ -228,7 +210,7 @@ export default function SearchModal({
                 <div className="rounded-lg bg-gray-200 px-2 py-1 text-xs font-medium dark:bg-gray-700">ESC</div>
               </Dialog.Title>
               <div
-                className="max-h-[80vh] overflow-x-hidden overflow-y-scroll bg-white dark:bg-gray-900 dark:text-white"
+                className="max-h-[80vh] overflow-x-hidden overflow-y-scroll bg-white dark:bg-gray-900 dark:text-white backdrop-blur-md !bg-opacity-0"
                 onClick={closeSearchBox}
               >
                 {results.loading && (

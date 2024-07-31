@@ -4,6 +4,8 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { encodePath, getAccessToken } from '.'
 import apiConfig from '../../../config/api.config'
 import siteConfig from '../../../config/site.config'
+import { encryptData } from '../../utils/oAuthHandler'
+import { now } from '../../utils/loggerHelper'
 
 /**
  * Sanitize the search query
@@ -18,10 +20,11 @@ import siteConfig from '../../../config/site.config'
 function sanitiseQuery(query: string): string {
   const sanitisedQuery = query
     .replace(/'/g, "''")
-    .replace('<', ' &lt; ')
-    .replace('>', ' &gt; ')
-    .replace('?', ' ')
-    .replace('/', ' ')
+    .replace(/</g, ' &lt; ')
+    .replace(/>/g, ' &gt; ')
+    .replace(/\?/g, ' ')
+    .replace(/\//g, ' ')
+    .replace(/\\/g, ' ')
   return encodeURIComponent(sanitisedQuery)
 }
 
@@ -37,6 +40,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   res.setHeader('Cache-Control', apiConfig.cacheControlHeader)
 
   if (typeof searchQuery === 'string') {
+    console.info(`[${now()}][SEARCH] Query: %s`, searchQuery)
+
     // Construct Microsoft Graph Search API URL, and perform search only under the base directory
     const searchRootPath = encodePath('/')
     const encodedPath = searchRootPath === '' ? searchRootPath : searchRootPath + ':'
@@ -47,13 +52,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const { data } = await axios.get(searchApi, {
         headers: { Authorization: `Bearer ${accessToken}` },
         params: {
-          select: 'id,name,file,folder,parentReference',
+          select: 'id,file,parentReference',
           top: siteConfig.maxItems,
         },
       })
-      res.status(200).json(data.value)
+      res.status(200).json(data.value.map(item => {
+        delete item['@odata.type']
+        item.file = item.file ? true : false;
+        delete item?.parentReference?.driveId
+        delete item?.parentReference?.driveType
+        delete item?.parentReference?.siteId
+        delete item?.parentReference?.path
+        item.id = encryptData(item.id);
+        if (item.parentReference.id) {
+          item.parentReference.id = encryptData(item?.parentReference?.id)
+        }
+        return item
+      }))
     } catch (error: any) {
-      res.status(error?.response?.status ?? 500).json({ error: error?.response?.data ?? 'Internal server error.' })
+      res.status(error?.response?.status ?? 500).json({ error: error?.response?.data?.error ?? 'Internal server error.' })
+      // console.log(error)
     }
   } else {
     res.status(200).json([])
