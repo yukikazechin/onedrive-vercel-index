@@ -5,9 +5,9 @@ export type OdAPIResponse = { file?: OdFileObject; folder?: OdFolderObject; next
 // inside the folder. The items may also be either files or folders.
 export type OdFolderObject = {
   '@odata.count': number
-  '@odata.context': string
   '@odata.nextLink'?: string
   value: Array<{
+    odpt?: string;
     id: string
     name: string
     size: number
@@ -15,13 +15,14 @@ export type OdFolderObject = {
     file?: { mimeType: string; hashes: { quickXorHash?: string; sha1Hash?: string; sha256Hash?: string } }
     folder?: { childCount: number; view: { sortBy: string; sortOrder: 'ascending'; viewType: 'thumbnails' } }
     image?: OdImageFile
-    video?: OdVideoFile
+    video?: OdVideoFile,
+    protected?: boolean
   }>
 }
 export type OdFolderChildren = OdFolderObject['value'][number]
 // A file object returned from the OneDrive API. This object may contain 'video' if the file is a video.
 export type OdFileObject = {
-  '@odata.context': string
+  odpt?: string;
   name: string
   size: number
   id: string
@@ -29,6 +30,7 @@ export type OdFileObject = {
   file: { mimeType: string; hashes: { quickXorHash: string; sha1Hash?: string; sha256Hash?: string } }
   image?: OdImageFile
   video?: OdVideoFile
+  protected?: boolean
 }
 // A representation of a OneDrive image file. Some images do not return a width and height, so types are optional.
 export type OdImageFile = {
@@ -64,9 +66,9 @@ export type OdSearchResult = Array<{
 }>
 // API response object for /api/item/?id={id}. This is primarily used for determining the path of the driveItem by ID.
 export type OdDriveItem = {
-  '@odata.context': string
   '@odata.etag': string
   id: string
   name: string
-  parentReference: { driveId: string; driveType: string; id: string; path: string }
+  parentReference: { driveId: string; driveType: string; id: string; path: string },
+  file?: OdFileObject
 }

@@ -2,7 +2,7 @@ import '@fortawesome/fontawesome-svg-core/styles.css'
 
 import '../styles/globals.css'
 import '../styles/markdown-github.css'
-import { Analytics } from '@vercel/analytics/react';
+// import { Analytics } from '@vercel/analytics/react';
 
 // Require had to be used to prevent SSR failure in Next.js
 // Related discussion: https://github.com/FortAwesome/Font-Awesome/issues/19348
@@ -58,6 +58,8 @@ import {
   faThList,
   faHome,
   faLanguage,
+  faMoon,
+  faLock
 } from '@fortawesome/free-solid-svg-icons'
 import * as Icons from '@fortawesome/free-brands-svg-icons'
 
@@ -117,6 +119,8 @@ library.add(
   faThList,
   faLanguage,
   faPen,
+  faMoon,
+  faLock,
   ...iconList
 )
 
@@ -124,7 +128,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   return (
     <>
       <NextNProgress height={1} color="rgb(156, 163, 175, 0.9)" options={{ showSpinner: false }} />
-      <Analytics />
+      {/* <Analytics /> */}
       <Component {...pageProps} />
     </>
   )
